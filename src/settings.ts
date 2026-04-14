@@ -41,12 +41,14 @@ export const DEFAULT_ATTACHMENT_EXTENSIONS = [
   "rar"
 ].join(", ");
 
-export const DEFAULT_SETTINGS: VaultPruneSettings = {
-  attachmentFolders: "",
-  ignoredFolders: ".obsidian\n.trash\n.git",
-  attachmentExtensions: DEFAULT_ATTACHMENT_EXTENSIONS,
-  extraReferenceExtensions: "json",
-};
+export function buildDefaultSettings(configDir: string): VaultPruneSettings {
+  return {
+    attachmentFolders: "",
+    ignoredFolders: [configDir, ".trash", ".git"].filter(Boolean).join("\n"),
+    attachmentExtensions: DEFAULT_ATTACHMENT_EXTENSIONS,
+    extraReferenceExtensions: "json",
+  };
+}
 
 function normalizeMultilinePaths(value: string): string {
   return value
@@ -82,7 +84,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
       .setDesc("Optional. One folder per line. Leave empty to scan the whole vault.")
       .addTextArea((text) => {
         text
-          .setPlaceholder("Attachments\nAssets/Images")
+          .setPlaceholder("Example: attachments\nExample: assets/images")
           .setValue(this.plugin.settings.attachmentFolders)
           .onChange(async (value) => {
             this.plugin.settings.attachmentFolders = normalizeMultilinePaths(value);
@@ -97,7 +99,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
       .setDesc("One folder per line. These folders will be skipped during candidate selection.")
       .addTextArea((text) => {
         text
-          .setPlaceholder(".obsidian\n.trash")
+          .setPlaceholder(`Example: ${this.app.vault.configDir}\nExample: .trash`)
           .setValue(this.plugin.settings.ignoredFolders)
           .onChange(async (value) => {
             this.plugin.settings.ignoredFolders = normalizeMultilinePaths(value);
@@ -127,7 +129,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
       .setDesc("Optional. Text-based file extensions to scan for extra attachment references, such as json or csv.")
       .addTextArea((text) => {
         text
-          .setPlaceholder("json")
+          .setPlaceholder("Example: json")
           .setValue(this.plugin.settings.extraReferenceExtensions)
           .onChange(async (value) => {
             this.plugin.settings.extraReferenceExtensions = normalizeExtensions(value);

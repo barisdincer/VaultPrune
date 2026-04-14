@@ -30,7 +30,7 @@ export class VaultPruneReviewModal extends Modal {
 
   private async refresh(): Promise<void> {
     this.contentEl.empty();
-    this.contentEl.createEl("h2", { text: "VaultPrune review" });
+    this.contentEl.createEl("h2", { text: "Review unused attachments" });
     this.contentEl.createDiv({
       cls: "vaultprune-summary",
       text: "Scanning your vault for unreferenced attachment candidates...",
@@ -44,10 +44,10 @@ export class VaultPruneReviewModal extends Modal {
     } catch (error) {
       console.error("VaultPrune scan failed", error);
       this.contentEl.empty();
-      this.contentEl.createEl("h2", { text: "VaultPrune review" });
+      this.contentEl.createEl("h2", { text: "Review unused attachments" });
       this.contentEl.createDiv({
         cls: "vaultprune-empty",
-        text: "VaultPrune could not complete the scan. Check the developer console for details.",
+        text: "Could not complete the scan. Check the developer console for details.",
       });
     }
   }
@@ -65,7 +65,7 @@ export class VaultPruneReviewModal extends Modal {
     );
 
     contentEl.empty();
-    contentEl.createEl("h2", { text: "VaultPrune review" });
+    contentEl.createEl("h2", { text: "Review unused attachments" });
     contentEl.createDiv({
       cls: "vaultprune-summary",
       text:
@@ -121,7 +121,7 @@ export class VaultPruneReviewModal extends Modal {
       .setName("Search")
       .setDesc("Filter by path, folder, or extension.")
       .addText((text) => {
-        text.setPlaceholder("attachments/logo")
+        text.setPlaceholder("Example: attachments/logo.png")
           .setValue(this.pathQuery)
           .onChange((value) => {
             this.pathQuery = value;
@@ -198,7 +198,7 @@ export class VaultPruneReviewModal extends Modal {
             summary,
             visibleCandidates,
             this.selectedPaths,
-            "VaultPrune preview report",
+            "Preview unused attachments report",
             "Preview only. This report reflects the current filtered view.",
           );
         });
@@ -292,9 +292,12 @@ export class VaultPruneReviewModal extends Modal {
       return;
     }
 
-    const confirmed = window.confirm(
+    const confirmed = await new ConfirmActionModal(
+      this.app,
+      "Move selected attachments to trash",
       `Move ${selectedCandidates.length} selected attachment candidate(s) to trash?`,
-    );
+      "Move to trash",
+    ).openAndWait();
     if (!confirmed) {
       return;
     }
@@ -371,11 +374,71 @@ export class VaultPruneReportModal extends Modal {
   private async copyReport(): Promise<void> {
     try {
       await navigator.clipboard.writeText(this.reportText);
-      new Notice("VaultPrune preview report copied.");
+      new Notice("Preview report copied.");
     } catch (error) {
       console.error("VaultPrune clipboard copy failed", error);
-      new Notice("VaultPrune could not copy the report automatically.");
+      new Notice("Could not copy the report automatically.");
     }
+  }
+}
+
+class ConfirmActionModal extends Modal {
+  private ctaLabel: string;
+  private message: string;
+  private resolved = false;
+  private resolvePromise: (value: boolean) => void;
+  private title: string;
+
+  constructor(
+    app: App,
+    title: string,
+    message: string,
+    ctaLabel: string,
+  ) {
+    super(app);
+    this.title = title;
+    this.message = message;
+    this.ctaLabel = ctaLabel;
+    this.resolvePromise = () => undefined;
+  }
+
+  openAndWait(): Promise<boolean> {
+    return new Promise((resolve) => {
+      this.resolvePromise = resolve;
+      this.open();
+    });
+  }
+
+  onOpen(): void {
+    this.contentEl.empty();
+    this.contentEl.createEl("h2", { text: this.title });
+    this.contentEl.createEl("p", { text: this.message });
+
+    const actionRow = this.contentEl.createDiv({ cls: "vaultprune-actions" });
+    new Setting(actionRow)
+      .addButton((button) => {
+        button.setButtonText("Cancel").onClick(() => {
+          this.finish(false);
+        });
+      })
+      .addButton((button) => {
+        button.setButtonText(this.ctaLabel).setWarning().onClick(() => {
+          this.finish(true);
+        });
+      });
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
+    if (!this.resolved) {
+      this.resolvePromise(false);
+    }
+  }
+
+  private finish(value: boolean): void {
+    this.resolved = true;
+    this.resolvePromise(value);
+    this.close();
   }
 }
 

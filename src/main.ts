@@ -7,13 +7,13 @@ import {
 } from "./scanner";
 import { VaultPruneReviewModal, VaultPruneReportModal } from "./review-modal";
 import {
-  DEFAULT_SETTINGS,
+  buildDefaultSettings,
   VaultPruneSettingTab,
   type VaultPruneSettings,
 } from "./settings";
 
 export default class VaultPrunePlugin extends Plugin {
-  settings: VaultPruneSettings = DEFAULT_SETTINGS;
+  settings!: VaultPruneSettings;
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -36,12 +36,12 @@ export default class VaultPrunePlugin extends Plugin {
             summary,
             summary.unusedCandidates,
             new Set(summary.unusedCandidates.map((candidate) => candidate.path)),
-            "VaultPrune preview report",
+            "Preview unused attachments report",
             "Preview only. No files were moved or deleted.",
           );
         } catch (error) {
           console.error("VaultPrune preview report failed", error);
-          new Notice("VaultPrune could not generate the preview report.");
+          new Notice("Could not generate the preview report.");
         }
       },
     });
@@ -51,7 +51,7 @@ export default class VaultPrunePlugin extends Plugin {
 
   async loadSettings(): Promise<void> {
     const loaded = (await this.loadData()) as Partial<VaultPruneSettings> | null;
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded ?? {});
+    this.settings = Object.assign({}, buildDefaultSettings(this.app.vault.configDir), loaded ?? {});
   }
 
   async saveSettings(): Promise<void> {
