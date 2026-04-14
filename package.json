@@ -1,0 +1,43 @@
+{
+  "name": "vaultprune",
+  "version": "0.1.0",
+  "description": "Obsidian plugin for finding and cleaning unused attachments.",
+  "author": "Baris Dincer",
+  "homepage": "https://github.com/barisdincer/VaultPrune",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/barisdincer/VaultPrune.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "check": "tsc --noEmit --skipLibCheck",
+    "build": "npm run check && node esbuild.config.mjs production",
+    "version": "node version-bump.mjs",
+    "install:local": "node scripts/install-local.mjs",
+    "deploy:local": "npm run build && node scripts/install-local.mjs"
+  },
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "attachments",
+    "cleanup"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/barisdincer/VaultPrune/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.6",
+    "esbuild": "0.25.5",
+    "tslib": "2.4.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "obsidian": "latest"
+  }
+}

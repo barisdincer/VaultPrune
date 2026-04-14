@@ -1,0 +1,21 @@
+# editors
+.vscode
+.idea
+*.iml
+
+# node
+node_modules
+
+# build output
+main.js
+*.map
+
+# python
+__pycache__/
+*.pyc
+
+# obsidian plugin data
+data.json
+
+# misc
+.DS_Store

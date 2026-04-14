@@ -1,0 +1,10 @@
+{
+  "id": "vaultprune",
+  "name": "VaultPrune - Unused Attachment Cleaner",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Scan your Obsidian vault for attachments that are no longer referenced and review them before moving them to trash.",
+  "author": "Baris Dincer",
+  "authorUrl": "https://github.com/barisdincer",
+  "isDesktopOnly": true
+}

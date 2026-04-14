@@ -1,0 +1,84 @@
+.vaultprune-modal {
+  min-width: min(900px, 92vw);
+}
+
+.vaultprune-summary {
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.vaultprune-summary-secondary {
+  margin-top: -0.5rem;
+}
+
+.vaultprune-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.vaultprune-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.vaultprune-empty {
+  padding: 1rem;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background: var(--background-secondary);
+}
+
+.vaultprune-file-list {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.vaultprune-file-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background: var(--background-secondary);
+}
+
+.vaultprune-file-details {
+  min-width: 0;
+}
+
+.vaultprune-file-path {
+  font-family: var(--font-monospace);
+  word-break: break-word;
+}
+
+.vaultprune-file-meta {
+  margin-top: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+.vaultprune-file-size {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.vaultprune-open-button {
+  white-space: nowrap;
+}
+
+.vaultprune-report-textarea {
+  width: 100%;
+  min-height: 55vh;
+  resize: vertical;
+  font-family: var(--font-monospace);
+  line-height: 1.45;
+}

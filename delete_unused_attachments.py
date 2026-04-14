@@ -1,5 +1,8 @@
 import os
 
+# Legacy prototype kept for historical reference.
+# The Obsidian plugin implementation now lives in the TypeScript source tree.
+
 def delete_unused_attachments(z_ekler_path, main_folder_path):
     # Get list of files in z_ekler folder
     z_ekler_files = os.listdir(z_ekler_path)
@@ -32,4 +35,4 @@ attachment_path = r'C:\Users\baris\Obsidian\Kisisel\attachment_path'
 main_folder_path = r'C:\Users\baris\Obsidian\Kisisel'
 
 # Call the function to delete unused attachments
-delete_unused_attachments(z_ekler_path, main_folder_path)
+delete_unused_attachments(attachment_path, main_folder_path)
