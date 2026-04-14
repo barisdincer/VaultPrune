@@ -1,7 +1,7 @@
 {
   "name": "vaultprune",
   "version": "0.1.0",
-  "description": "Obsidian plugin for finding and cleaning unused attachments.",
+  "description": "Plugin for finding and cleaning unused attachments in your vault.",
   "author": "Baris Dincer",
   "homepage": "https://github.com/barisdincer/VaultPrune",
   "main": "main.js",
