@@ -84,7 +84,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
       .setDesc("Optional. One folder per line. Leave empty to scan the whole vault.")
       .addTextArea((text) => {
         text
-          .setPlaceholder("Example: attachments\nExample: assets/images")
+          .setPlaceholder("attachments\nassets/images")
           .setValue(this.plugin.settings.attachmentFolders)
           .onChange(async (value) => {
             this.plugin.settings.attachmentFolders = normalizeMultilinePaths(value);
@@ -99,7 +99,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
       .setDesc("One folder per line. These folders will be skipped during candidate selection.")
       .addTextArea((text) => {
         text
-          .setPlaceholder(`Example: ${this.app.vault.configDir}\nExample: .trash`)
+          .setPlaceholder(`${this.app.vault.configDir}\n.trash`)
           .setValue(this.plugin.settings.ignoredFolders)
           .onChange(async (value) => {
             this.plugin.settings.ignoredFolders = normalizeMultilinePaths(value);
@@ -126,10 +126,10 @@ export class VaultPruneSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Extra reference file extensions")
-      .setDesc("Optional. Text-based file extensions to scan for extra attachment references, such as json or csv.")
+      .setDesc("Optionally scan text-based file extensions for extra attachment references, such as JSON or CSV.")
       .addTextArea((text) => {
         text
-          .setPlaceholder("Example: json")
+          .setPlaceholder("json, csv")
           .setValue(this.plugin.settings.extraReferenceExtensions)
           .onChange(async (value) => {
             this.plugin.settings.extraReferenceExtensions = normalizeExtensions(value);
