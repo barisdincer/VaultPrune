@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "check": "tsc --noEmit --skipLibCheck",
+    "lint": "eslint \"src/**/*.ts\"",
     "build": "npm run check && node esbuild.config.mjs production",
     "version": "node version-bump.mjs",
     "install:local": "node scripts/install-local.mjs",
@@ -33,7 +34,10 @@
   },
   "devDependencies": {
     "@types/node": "^16.11.6",
+    "@typescript-eslint/parser": "^8.58.2",
     "esbuild": "0.25.5",
+    "eslint": "^9.39.4",
+    "eslint-plugin-obsidianmd": "^0.1.9",
     "tslib": "2.4.0",
     "typescript": "^5.8.3"
   },

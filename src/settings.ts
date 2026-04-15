@@ -84,7 +84,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
       .setDesc("Optional. One folder per line. Leave empty to scan the whole vault.")
       .addTextArea((text) => {
         text
-          .setPlaceholder("Attachments\nAssets/images")
+          .setPlaceholder("Attachments\nassets/images")
           .setValue(this.plugin.settings.attachmentFolders)
           .onChange(async (value) => {
             this.plugin.settings.attachmentFolders = normalizeMultilinePaths(value);
