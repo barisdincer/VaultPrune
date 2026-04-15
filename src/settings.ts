@@ -84,7 +84,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
       .setDesc("Optional. One folder per line. Leave empty to scan the whole vault.")
       .addTextArea((text) => {
         text
-          .setPlaceholder("attachments\nassets/images")
+          .setPlaceholder("Attachments\nAssets/images")
           .setValue(this.plugin.settings.attachmentFolders)
           .onChange(async (value) => {
             this.plugin.settings.attachmentFolders = normalizeMultilinePaths(value);
@@ -129,7 +129,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
       .setDesc("Optionally scan text-based file extensions for extra attachment references, such as JSON or CSV.")
       .addTextArea((text) => {
         text
-          .setPlaceholder("json, csv")
+          .setPlaceholder("JSON, CSV")
           .setValue(this.plugin.settings.extraReferenceExtensions)
           .onChange(async (value) => {
             this.plugin.settings.extraReferenceExtensions = normalizeExtensions(value);
