@@ -1,8 +1,8 @@
 {
   "id": "vaultprune",
   "name": "VaultPrune - Unused Attachment Cleaner",
-  "version": "0.1.1",
-  "minAppVersion": "1.5.0",
+  "version": "0.1.2",
+  "minAppVersion": "1.8.7",
   "description": "Scan your vault for attachments that are no longer referenced and review them before moving them to trash.",
   "author": "Baris Dincer",
   "authorUrl": "https://github.com/barisdincer",
