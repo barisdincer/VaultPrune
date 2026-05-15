@@ -1,9 +1,49 @@
-import { App, Modal, Notice, Setting } from "obsidian";
+import { App, Modal, Notice, Setting, setIcon } from "obsidian";
 import type VaultPrunePlugin from "./main";
 import type { AttachmentCandidate, ScanSummary } from "./scanner";
-import { formatBytes, formatTimestamp } from "./utils";
+import { formatBytes, formatTimestamp, normalizeConfiguredFolderPath } from "./utils";
 
 type SortOrder = "extension" | "modified-desc" | "path" | "size-desc";
+
+const IMAGE_PREVIEW_EXTENSIONS = new Set([
+  "avif",
+  "bmp",
+  "gif",
+  "heic",
+  "ico",
+  "jpeg",
+  "jpg",
+  "png",
+  "svg",
+  "webp",
+]);
+
+const VIDEO_PREVIEW_EXTENSIONS = new Set([
+  "mkv",
+  "mov",
+  "mp4",
+  "webm",
+]);
+
+const AUDIO_EXTENSIONS = new Set([
+  "flac",
+  "m4a",
+  "mp3",
+  "ogg",
+  "wav",
+]);
+
+const ARCHIVE_EXTENSIONS = new Set(["7z", "rar", "zip"]);
+const DOCUMENT_EXTENSIONS = new Set([
+  "doc",
+  "docx",
+  "epub",
+  "pdf",
+  "ppt",
+  "pptx",
+  "xls",
+  "xlsx",
+]);
 
 export class VaultPruneReviewModal extends Modal {
   private currentSummary: ScanSummary | null = null;
@@ -233,6 +273,8 @@ export class VaultPruneReviewModal extends Modal {
       this.render(summary);
     });
 
+    this.renderCandidatePreview(rowEl, candidate);
+
     const detailsEl = rowEl.createDiv({ cls: "vaultprune-file-details" });
     detailsEl.createDiv({
       cls: "vaultprune-file-path",
@@ -250,13 +292,69 @@ export class VaultPruneReviewModal extends Modal {
       text: formatBytes(candidate.sizeBytes),
     });
 
-    const openButton = rowEl.createEl("button", {
-      cls: "vaultprune-open-button",
-      text: "Open",
-    });
+    const actionEl = rowEl.createDiv({ cls: "vaultprune-file-actions" });
+    const openButton = actionEl.createEl("button", { text: "Open" });
     openButton.addEventListener("click", () => {
       void this.app.workspace.getLeaf(true).openFile(candidate.file);
     });
+
+    const ignoreButton = actionEl.createEl("button", { text: "Ignore" });
+    ignoreButton.addEventListener("click", () => {
+      void this.ignoreCandidate(candidate);
+    });
+  }
+
+  private renderCandidatePreview(parentEl: HTMLElement, candidate: AttachmentCandidate): void {
+    const previewEl = parentEl.createDiv({ cls: "vaultprune-file-preview" });
+    previewEl.setAttribute("aria-label", `Preview for ${candidate.path}`);
+
+    if (IMAGE_PREVIEW_EXTENSIONS.has(candidate.extension)) {
+      const imageEl = previewEl.createEl("img", { cls: "vaultprune-file-preview-media" });
+      imageEl.alt = "";
+      imageEl.loading = "lazy";
+      imageEl.src = this.app.vault.getResourcePath(candidate.file);
+      imageEl.addEventListener("error", () => {
+        this.renderPreviewBadge(previewEl, candidate.extension);
+      });
+      return;
+    }
+
+    if (VIDEO_PREVIEW_EXTENSIONS.has(candidate.extension)) {
+      const videoEl = previewEl.createEl("video", { cls: "vaultprune-file-preview-media" });
+      videoEl.muted = true;
+      videoEl.preload = "metadata";
+      videoEl.src = this.app.vault.getResourcePath(candidate.file);
+      videoEl.addEventListener("error", () => {
+        this.renderPreviewBadge(previewEl, candidate.extension);
+      });
+      return;
+    }
+
+    this.renderPreviewBadge(previewEl, candidate.extension);
+  }
+
+  private renderPreviewBadge(previewEl: HTMLElement, extension: string): void {
+    previewEl.empty();
+    const iconEl = previewEl.createDiv({ cls: "vaultprune-file-preview-icon" });
+    setIcon(iconEl, getPreviewIcon(extension));
+    previewEl.createDiv({
+      cls: "vaultprune-file-preview-extension",
+      text: extension || "file",
+    });
+  }
+
+  private async ignoreCandidate(candidate: AttachmentCandidate): Promise<void> {
+    const ignoredFiles = parseIgnoredFileSetting(this.plugin.settings.ignoredFiles, this.app);
+
+    if (!ignoredFiles.has(candidate.path)) {
+      ignoredFiles.add(candidate.path);
+      this.plugin.settings.ignoredFiles = [...ignoredFiles].sort().join("\n");
+      await this.plugin.saveSettings();
+    }
+
+    this.selectedPaths.delete(candidate.path);
+    new Notice("File added to VaultPrune safe list.");
+    await this.refresh();
   }
 
   private getVisibleCandidates(summary: ScanSummary): AttachmentCandidate[] {
@@ -471,4 +569,31 @@ function getExtensionOptions(candidates: AttachmentCandidate[]): string[] {
 
 function sumCandidateBytes(candidates: AttachmentCandidate[]): number {
   return candidates.reduce((total, candidate) => total + candidate.sizeBytes, 0);
+}
+
+function parseIgnoredFileSetting(value: string, app: App): Set<string> {
+  return new Set(
+    value
+      .split("\n")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .map((entry) => normalizeConfiguredFolderPath(entry, app))
+      .filter(Boolean),
+  );
+}
+
+function getPreviewIcon(extension: string): string {
+  if (AUDIO_EXTENSIONS.has(extension)) {
+    return "music";
+  }
+
+  if (ARCHIVE_EXTENSIONS.has(extension)) {
+    return "archive";
+  }
+
+  if (DOCUMENT_EXTENSIONS.has(extension)) {
+    return "file-text";
+  }
+
+  return "file";
 }

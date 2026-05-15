@@ -1,4 +1,8 @@
-import type { TFile } from "obsidian";
+import { normalizePath, type App, type TFile } from "obsidian";
+
+interface AdapterWithBasePath {
+  getBasePath: () => string;
+}
 
 export function escapeMarkdownCell(value: string): string {
   return value.replace(/\|/g, "\\|");
@@ -42,4 +46,33 @@ export function getParentPath(path: string): string {
   }
 
   return path.slice(0, separatorIndex);
+}
+
+export function normalizeConfiguredFolderPath(entry: string, app?: App): string {
+  const normalizedEntry = normalizePath(entry).replace(/\/$/, "");
+  const vaultBasePath = app ? getVaultBasePath(app) : null;
+
+  if (vaultBasePath) {
+    const lowerEntry = normalizedEntry.toLowerCase();
+    const lowerVaultBasePath = vaultBasePath.toLowerCase();
+
+    if (lowerEntry === lowerVaultBasePath) {
+      return "";
+    }
+
+    if (lowerEntry.startsWith(`${lowerVaultBasePath}/`)) {
+      return normalizedEntry.slice(vaultBasePath.length + 1).replace(/\/$/, "");
+    }
+  }
+
+  return normalizedEntry.replace(/^\/+/, "");
+}
+
+function getVaultBasePath(app: App): string | null {
+  const adapter = app.vault.adapter as Partial<AdapterWithBasePath>;
+  if (typeof adapter.getBasePath !== "function") {
+    return null;
+  }
+
+  return normalizePath(adapter.getBasePath()).replace(/\/$/, "");
 }

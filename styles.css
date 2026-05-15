@@ -2,6 +2,42 @@
   min-width: min(900px, 92vw);
 }
 
+.vaultprune-settings-tab .vaultprune-settings-action {
+  align-items: center;
+}
+
+.vaultprune-settings-tab .vaultprune-settings-textarea-setting {
+  align-items: flex-start;
+  padding: 0.75rem 0;
+}
+
+.vaultprune-settings-textarea-setting .setting-item-info {
+  padding-top: 0.25rem;
+}
+
+.vaultprune-settings-textarea-setting .setting-item-control {
+  align-items: stretch;
+  width: min(28rem, 100%);
+}
+
+textarea.vaultprune-settings-textarea {
+  width: 100%;
+  height: 4.5rem;
+  min-height: 4.5rem;
+  line-height: 1.35;
+  resize: vertical;
+}
+
+textarea.vaultprune-settings-textarea-short {
+  height: 3.25rem;
+  min-height: 3.25rem;
+}
+
+textarea.vaultprune-settings-textarea-tall {
+  height: 5.75rem;
+  min-height: 5.75rem;
+}
+
 .vaultprune-summary {
   margin-bottom: 1rem;
   color: var(--text-muted);
@@ -29,7 +65,7 @@
 .vaultprune-empty {
   padding: 1rem;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--background-secondary);
 }
 
@@ -42,13 +78,48 @@
 
 .vaultprune-file-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: auto 4rem minmax(0, 1fr) auto auto;
   gap: 0.75rem;
   align-items: center;
   padding: 0.75rem;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--background-secondary);
+}
+
+.vaultprune-file-preview {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  overflow: hidden;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-primary);
+}
+
+.vaultprune-file-preview-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vaultprune-file-preview-icon {
+  color: var(--text-muted);
+}
+
+.vaultprune-file-preview-extension {
+  max-width: 100%;
+  padding: 0 0.25rem;
+  color: var(--text-faint);
+  font-family: var(--font-monospace);
+  font-size: 0.7rem;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .vaultprune-file-details {
@@ -71,7 +142,14 @@
   white-space: nowrap;
 }
 
-.vaultprune-open-button {
+.vaultprune-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.vaultprune-file-actions button {
   white-space: nowrap;
 }
 
@@ -81,4 +159,25 @@
   resize: vertical;
   font-family: var(--font-monospace);
   line-height: 1.45;
+}
+
+@media (max-width: 700px) {
+  .vaultprune-settings-tab .vaultprune-settings-textarea-setting {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .vaultprune-settings-textarea-setting .setting-item-control {
+    width: 100%;
+  }
+
+  .vaultprune-file-row {
+    grid-template-columns: auto 4rem minmax(0, 1fr);
+  }
+
+  .vaultprune-file-size,
+  .vaultprune-file-actions {
+    grid-column: 3;
+    justify-content: flex-start;
+  }
 }

@@ -24,8 +24,9 @@ VaultPrune is being designed around a safe cleanup flow:
 2. Detect which attachments are referenced by Markdown notes.
 3. Also consider file references inside Canvas files, including text-card links and group backgrounds.
 4. Show unused attachment candidates in a review modal with search, extension filters, sorting, and bulk selection tools.
-5. Generate a preview-only report before moving reviewed files to trash.
-6. Let the user move selected files to trash.
+5. Show quick previews for visual media and allow known-safe files to be ignored from future scans.
+6. Generate a preview-only report before moving reviewed files to trash.
+7. Let the user move selected files to trash.
 
 ## Repository status
 
@@ -80,6 +81,7 @@ The first plugin milestone focuses on:
 - listing unused attachment candidates
 - reviewing them in a modal
 - filtering and preview-reporting candidates before deletion
+- safe-listing known files that should stay in attachment folders
 - moving selected files to trash
 
 ## Current commands

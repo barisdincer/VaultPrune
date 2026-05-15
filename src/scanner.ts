@@ -7,7 +7,7 @@ import {
   parseLinktext,
 } from "obsidian";
 import type { VaultPruneSettings } from "./settings";
-import { getFileFolder, getParentPath } from "./utils";
+import { getFileFolder, getParentPath, normalizeConfiguredFolderPath } from "./utils";
 
 const WIKI_LINK_PATTERN = /!?\[\[([^[\]]+)\]\]/g;
 const MARKDOWN_LINK_PATTERN = /!?\[[^\]]*]\(([^)]+)\)/g;
@@ -26,6 +26,7 @@ interface CanvasDataLike {
 interface ScanFilters {
   attachmentFolders: string[];
   ignoredFolders: string[];
+  ignoredFiles: Set<string>;
   allowedExtensions: Set<string>;
   extraReferenceExtensions: Set<string>;
 }
@@ -57,7 +58,7 @@ export async function scanVault(
   const allFiles = app.vault.getFiles();
   const markdownFiles = app.vault.getMarkdownFiles();
   const canvasFiles = allFiles.filter((file) => file.extension.toLowerCase() === "canvas");
-  const filters = buildScanFilters(settings);
+  const filters = buildScanFilters(app, settings);
   const extraReferenceFiles = allFiles.filter((file) => isExtraReferenceFile(file, filters));
   const referencedPaths = new Set<string>();
 
@@ -90,10 +91,11 @@ export async function scanVault(
   };
 }
 
-function buildScanFilters(settings: VaultPruneSettings): ScanFilters {
+function buildScanFilters(app: App, settings: VaultPruneSettings): ScanFilters {
   return {
-    attachmentFolders: parseFolderList(settings.attachmentFolders),
-    ignoredFolders: parseFolderList(settings.ignoredFolders),
+    attachmentFolders: parseFolderList(settings.attachmentFolders, app),
+    ignoredFolders: parseFolderList(settings.ignoredFolders, app),
+    ignoredFiles: parseFileList(settings.ignoredFiles, app),
     allowedExtensions: parseExtensionList(settings.attachmentExtensions),
     extraReferenceExtensions: parseExtensionList(settings.extraReferenceExtensions),
   };
@@ -317,6 +319,10 @@ function isAttachmentCandidate(file: TFile, filters: ScanFilters): boolean {
     return false;
   }
 
+  if (filters.ignoredFiles.has(file.path)) {
+    return false;
+  }
+
   if (isInConfiguredFolder(file.path, filters.ignoredFolders)) {
     return false;
   }
@@ -344,12 +350,17 @@ function isExtraReferenceFile(
   return !isInConfiguredFolder(file.path, filters.ignoredFolders);
 }
 
-function parseFolderList(value: string): string[] {
+function parseFolderList(value: string, app: App): string[] {
   return value
     .split("\n")
     .map((entry) => entry.trim())
     .filter(Boolean)
-    .map((entry) => normalizePath(entry).replace(/\/$/, ""));
+    .map((entry) => normalizeConfiguredFolderPath(entry, app))
+    .filter(Boolean);
+}
+
+function parseFileList(value: string, app: App): Set<string> {
+  return new Set(parseFolderList(value, app));
 }
 
 function parseExtensionList(value: string): Set<string> {
