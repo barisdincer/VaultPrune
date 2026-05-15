@@ -117,18 +117,10 @@ function applySettingsTextareaLayout(
   textareaEl: HTMLTextAreaElement,
   size: SettingsTextareaSize,
 ): void {
-  const heightBySize: Record<SettingsTextareaSize, string> = {
-    medium: "4rem",
-    short: "2.75rem",
-    tall: "4.75rem",
-  };
-  const height = heightBySize[size];
-
-  textareaEl.classList.add("vaultprune-settings-textarea");
-  textareaEl.style.height = height;
-  textareaEl.style.minHeight = height;
-  textareaEl.style.maxHeight = "10rem";
-  textareaEl.style.overflowY = "auto";
+  textareaEl.classList.add(
+    "vaultprune-settings-textarea",
+    `vaultprune-settings-textarea-${size}`,
+  );
 }
 
 export class VaultPruneSettingTab extends PluginSettingTab {
@@ -239,7 +231,6 @@ export class VaultPruneSettingTab extends PluginSettingTab {
         text.inputEl.rows = 4;
         text.inputEl.cols = 40;
         applySettingsTextareaLayout(text.inputEl, "tall");
-        text.inputEl.classList.add("vaultprune-settings-textarea-tall");
       });
     attachmentExtensionsSetting.settingEl.addClass("vaultprune-settings-textarea-setting");
 
@@ -257,7 +248,6 @@ export class VaultPruneSettingTab extends PluginSettingTab {
         text.inputEl.rows = 2;
         text.inputEl.cols = 40;
         applySettingsTextareaLayout(text.inputEl, "short");
-        text.inputEl.classList.add("vaultprune-settings-textarea-short");
       });
     extraReferenceExtensionsSetting.settingEl.addClass("vaultprune-settings-textarea-setting");
   }

@@ -1,6 +1,6 @@
 {
   "name": "vaultprune",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Plugin for finding and cleaning unused attachments in your vault.",
   "author": "Baris Dincer",
   "homepage": "https://github.com/barisdincer/VaultPrune",
