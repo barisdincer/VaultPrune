@@ -3,6 +3,8 @@ import type VaultPrunePlugin from "./main";
 import { VaultPruneReviewModal } from "./review-modal";
 import { normalizeConfiguredFolderPath } from "./utils";
 
+type SettingsTextareaSize = "medium" | "short" | "tall";
+
 export interface VaultPruneSettings {
   attachmentFolders: string;
   ignoredFolders: string;
@@ -72,6 +74,24 @@ function normalizeExtensions(value: string): string {
     .join(", ");
 }
 
+function applySettingsTextareaLayout(
+  textareaEl: HTMLTextAreaElement,
+  size: SettingsTextareaSize,
+): void {
+  const heightBySize: Record<SettingsTextareaSize, string> = {
+    medium: "4rem",
+    short: "2.75rem",
+    tall: "4.75rem",
+  };
+  const height = heightBySize[size];
+
+  textareaEl.classList.add("vaultprune-settings-textarea");
+  textareaEl.style.height = height;
+  textareaEl.style.minHeight = height;
+  textareaEl.style.maxHeight = "10rem";
+  textareaEl.style.overflowY = "auto";
+}
+
 export class VaultPruneSettingTab extends PluginSettingTab {
   plugin: VaultPrunePlugin;
 
@@ -84,6 +104,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.addClass("vaultprune-settings-tab");
+    this.normalizeStoredPathSettings();
 
     const scanSetting = new Setting(containerEl)
       .setName("Find unused attachments")
@@ -114,7 +135,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
           });
         text.inputEl.rows = 2;
         text.inputEl.cols = 40;
-        text.inputEl.classList.add("vaultprune-settings-textarea");
+        applySettingsTextareaLayout(text.inputEl, "short");
       });
     attachmentFoldersSetting.settingEl.addClass("vaultprune-settings-textarea-setting");
 
@@ -131,7 +152,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
           });
         text.inputEl.rows = 3;
         text.inputEl.cols = 40;
-        text.inputEl.classList.add("vaultprune-settings-textarea");
+        applySettingsTextareaLayout(text.inputEl, "medium");
       });
     ignoredFoldersSetting.settingEl.addClass("vaultprune-settings-textarea-setting");
 
@@ -148,7 +169,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
           });
         text.inputEl.rows = 3;
         text.inputEl.cols = 40;
-        text.inputEl.classList.add("vaultprune-settings-textarea");
+        applySettingsTextareaLayout(text.inputEl, "medium");
       });
     ignoredFilesSetting.settingEl.addClass("vaultprune-settings-textarea-setting");
 
@@ -165,10 +186,8 @@ export class VaultPruneSettingTab extends PluginSettingTab {
           });
         text.inputEl.rows = 4;
         text.inputEl.cols = 40;
-        text.inputEl.classList.add(
-          "vaultprune-settings-textarea",
-          "vaultprune-settings-textarea-tall",
-        );
+        applySettingsTextareaLayout(text.inputEl, "tall");
+        text.inputEl.classList.add("vaultprune-settings-textarea-tall");
       });
     attachmentExtensionsSetting.settingEl.addClass("vaultprune-settings-textarea-setting");
 
@@ -185,11 +204,38 @@ export class VaultPruneSettingTab extends PluginSettingTab {
           });
         text.inputEl.rows = 2;
         text.inputEl.cols = 40;
-        text.inputEl.classList.add(
-          "vaultprune-settings-textarea",
-          "vaultprune-settings-textarea-short",
-        );
+        applySettingsTextareaLayout(text.inputEl, "short");
+        text.inputEl.classList.add("vaultprune-settings-textarea-short");
       });
     extraReferenceExtensionsSetting.settingEl.addClass("vaultprune-settings-textarea-setting");
+  }
+
+  private normalizeStoredPathSettings(): void {
+    let changed = false;
+    const attachmentFolders = normalizeMultilinePaths(
+      this.plugin.settings.attachmentFolders,
+      this.app,
+    );
+    const ignoredFolders = normalizeMultilinePaths(this.plugin.settings.ignoredFolders, this.app);
+    const ignoredFiles = normalizeMultilinePaths(this.plugin.settings.ignoredFiles, this.app);
+
+    if (attachmentFolders !== this.plugin.settings.attachmentFolders) {
+      this.plugin.settings.attachmentFolders = attachmentFolders;
+      changed = true;
+    }
+
+    if (ignoredFolders !== this.plugin.settings.ignoredFolders) {
+      this.plugin.settings.ignoredFolders = ignoredFolders;
+      changed = true;
+    }
+
+    if (ignoredFiles !== this.plugin.settings.ignoredFiles) {
+      this.plugin.settings.ignoredFiles = ignoredFiles;
+      changed = true;
+    }
+
+    if (changed) {
+      void this.plugin.saveSettings();
+    }
   }
 }

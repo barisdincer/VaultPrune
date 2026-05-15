@@ -1,18 +1,27 @@
 .vaultprune-modal {
-  min-width: min(900px, 92vw);
+  width: min(1040px, 94vw);
+  min-width: min(900px, 94vw);
+}
+
+.vaultprune-preview-modal {
+  width: min(1100px, 94vw);
+  min-width: min(900px, 94vw);
 }
 
 .vaultprune-settings-tab .vaultprune-settings-action {
   align-items: center;
+  min-height: unset;
+  padding: 0.5rem 0.75rem;
 }
 
 .vaultprune-settings-tab .vaultprune-settings-textarea-setting {
   align-items: flex-start;
-  padding: 0.75rem 0;
+  min-height: unset;
+  padding: 0.45rem 0;
 }
 
 .vaultprune-settings-textarea-setting .setting-item-info {
-  padding-top: 0.25rem;
+  padding-top: 0.15rem;
 }
 
 .vaultprune-settings-textarea-setting .setting-item-control {
@@ -20,22 +29,25 @@
   width: min(28rem, 100%);
 }
 
-textarea.vaultprune-settings-textarea {
-  width: 100%;
-  height: 4.5rem;
-  min-height: 4.5rem;
+.vaultprune-settings-tab textarea.vaultprune-settings-textarea {
+  box-sizing: border-box;
+  width: 100% !important;
+  height: 4rem !important;
+  min-height: 4rem !important;
+  max-height: 10rem !important;
   line-height: 1.35;
+  overflow-y: auto;
   resize: vertical;
 }
 
-textarea.vaultprune-settings-textarea-short {
-  height: 3.25rem;
-  min-height: 3.25rem;
+.vaultprune-settings-tab textarea.vaultprune-settings-textarea-short {
+  height: 2.75rem !important;
+  min-height: 2.75rem !important;
 }
 
-textarea.vaultprune-settings-textarea-tall {
-  height: 5.75rem;
-  min-height: 5.75rem;
+.vaultprune-settings-tab textarea.vaultprune-settings-textarea-tall {
+  height: 4.75rem !important;
+  min-height: 4.75rem !important;
 }
 
 .vaultprune-summary {
@@ -48,11 +60,73 @@ textarea.vaultprune-settings-textarea-tall {
   margin-top: -0.5rem;
 }
 
+.vaultprune-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.vaultprune-stat {
+  padding: 0.75rem;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+}
+
+.vaultprune-stat-value {
+  color: var(--text-normal);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.vaultprune-stat-label {
+  margin-top: 0.25rem;
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.vaultprune-stat-detail,
+.vaultprune-scan-scope,
+.vaultprune-section-note {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.vaultprune-scan-scope {
+  margin: -0.25rem 0 0.9rem;
+}
+
+.vaultprune-section-note {
+  margin: -0.4rem 0 0.75rem;
+}
+
 .vaultprune-toolbar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.vaultprune-control-field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.vaultprune-control-label {
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.vaultprune-control-description {
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+.vaultprune-control-input {
+  width: 100%;
 }
 
 .vaultprune-actions {
@@ -78,7 +152,7 @@ textarea.vaultprune-settings-textarea-tall {
 
 .vaultprune-file-row {
   display: grid;
-  grid-template-columns: auto 4rem minmax(0, 1fr) auto auto;
+  grid-template-columns: auto 9rem minmax(0, 1fr) auto auto;
   gap: 0.75rem;
   align-items: center;
   padding: 0.75rem;
@@ -90,8 +164,8 @@ textarea.vaultprune-settings-textarea-tall {
 .vaultprune-file-preview {
   display: grid;
   place-items: center;
-  width: 4rem;
-  height: 4rem;
+  width: 9rem;
+  height: 6.5rem;
   overflow: hidden;
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
@@ -101,7 +175,11 @@ textarea.vaultprune-settings-textarea-tall {
 .vaultprune-file-preview-media {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+}
+
+.vaultprune-file-preview-clickable {
+  cursor: zoom-in;
 }
 
 .vaultprune-file-preview-icon {
@@ -137,6 +215,12 @@ textarea.vaultprune-settings-textarea-tall {
   font-size: 0.9em;
 }
 
+.vaultprune-file-status {
+  margin-top: 0.25rem;
+  color: var(--text-normal);
+  font-size: 0.9em;
+}
+
 .vaultprune-file-size {
   color: var(--text-muted);
   white-space: nowrap;
@@ -161,6 +245,23 @@ textarea.vaultprune-settings-textarea-tall {
   line-height: 1.45;
 }
 
+.vaultprune-large-preview {
+  display: grid;
+  place-items: center;
+  min-height: min(62vh, 620px);
+  margin-bottom: 1rem;
+  overflow: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+}
+
+.vaultprune-large-preview-media {
+  max-width: 100%;
+  max-height: min(62vh, 620px);
+  object-fit: contain;
+}
+
 @media (max-width: 700px) {
   .vaultprune-settings-tab .vaultprune-settings-textarea-setting {
     align-items: stretch;
@@ -172,7 +273,12 @@ textarea.vaultprune-settings-textarea-tall {
   }
 
   .vaultprune-file-row {
-    grid-template-columns: auto 4rem minmax(0, 1fr);
+    grid-template-columns: auto 5.5rem minmax(0, 1fr);
+  }
+
+  .vaultprune-file-preview {
+    width: 5.5rem;
+    height: 5.5rem;
   }
 
   .vaultprune-file-size,

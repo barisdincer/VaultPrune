@@ -105,25 +105,16 @@ export class VaultPruneReviewModal extends Modal {
     );
 
     contentEl.empty();
-    contentEl.createEl("h2", { text: "Review unused attachments" });
-    contentEl.createDiv({
-      cls: "vaultprune-summary",
-      text:
-        `${summary.scannedMarkdownFiles} Markdown note(s), ` +
-        `${summary.scannedCanvasFiles} Canvas file(s), ` +
-        `${summary.scannedExtraReferenceFiles} extra reference file(s), ` +
-        `${summary.scannedAttachmentFiles} attachment candidate(s) scanned. ` +
-        `${summary.referencedAttachmentCount} referenced attachment(s) matched. ` +
-        `${summary.unusedCandidates.length} unused candidate(s) found ` +
-        `(${formatBytes(summary.unusedBytes)}).`,
-    });
-    contentEl.createDiv({
-      cls: "vaultprune-summary vaultprune-summary-secondary",
-      text:
-        `Visible: ${visibleCandidates.length} (${formatBytes(visibleBytes)})` +
-        `  |  Selected in view: ${selectedVisibleCandidates.length} (${formatBytes(selectedVisibleBytes)})` +
-        `  |  Selected overall: ${selectedAllCandidates.length}`,
-    });
+    contentEl.createEl("h2", { text: "Unused attachment review" });
+    this.renderScanOverview(
+      contentEl,
+      summary,
+      visibleCandidates.length,
+      visibleBytes,
+      selectedVisibleCandidates.length,
+      selectedVisibleBytes,
+      selectedAllCandidates.length,
+    );
 
     this.renderControls(contentEl, summary, visibleCandidates);
 
@@ -143,10 +134,63 @@ export class VaultPruneReviewModal extends Modal {
       return;
     }
 
+    contentEl.createEl("h3", { text: "Files to review" });
+    contentEl.createDiv({
+      cls: "vaultprune-section-note",
+      text:
+        "These files are in your attachment folders, but VaultPrune did not find a note, Canvas, or configured reference file pointing to them.",
+    });
+
     const listEl = contentEl.createDiv({ cls: "vaultprune-file-list" });
     for (const candidate of visibleCandidates) {
       this.renderCandidateRow(listEl, summary, candidate);
     }
+  }
+
+  private renderScanOverview(
+    parentEl: HTMLElement,
+    summary: ScanSummary,
+    visibleCount: number,
+    visibleBytes: number,
+    selectedVisibleCount: number,
+    selectedVisibleBytes: number,
+    selectedOverallCount: number,
+  ): void {
+    parentEl.createDiv({
+      cls: "vaultprune-summary",
+      text:
+        "VaultPrune checked your vault references and found attachment files that look unused. " +
+        "Open a file if you are unsure, ignore files you want to keep, and move only reviewed files to trash.",
+    });
+
+    const statsEl = parentEl.createDiv({ cls: "vaultprune-stats" });
+    renderStat(
+      statsEl,
+      "Needs review",
+      String(summary.unusedCandidates.length),
+      formatBytes(summary.unusedBytes),
+    );
+    renderStat(statsEl, "Visible now", String(visibleCount), formatBytes(visibleBytes));
+    renderStat(
+      statsEl,
+      "Selected",
+      String(selectedOverallCount),
+      `${selectedVisibleCount} visible, ${formatBytes(selectedVisibleBytes)}`,
+    );
+    renderStat(
+      statsEl,
+      "Scan scope",
+      `${summary.scannedAttachmentFiles} files`,
+      `${summary.referencedAttachmentCount} referenced`,
+    );
+
+    parentEl.createDiv({
+      cls: "vaultprune-scan-scope",
+      text:
+        `${summary.scannedMarkdownFiles} Markdown notes, ` +
+        `${summary.scannedCanvasFiles} Canvas files, and ` +
+        `${summary.scannedExtraReferenceFiles} extra reference files were checked.`,
+    });
   }
 
   private renderControls(
@@ -157,101 +201,90 @@ export class VaultPruneReviewModal extends Modal {
     const toolbarEl = parentEl.createDiv({ cls: "vaultprune-toolbar" });
     const extensionOptions = getExtensionOptions(summary.unusedCandidates);
 
-    new Setting(toolbarEl)
-      .setName("Search")
-      .setDesc("Filter by path, folder, or extension.")
-      .addText((text) => {
-        text.setPlaceholder("Example: attachments/logo.png")
-          .setValue(this.pathQuery)
-          .onChange((value) => {
-            this.pathQuery = value;
-            this.render(summary);
-          });
-        text.inputEl.classList.add("vaultprune-search-input");
-      });
+    const searchFieldEl = createControlField(toolbarEl, "Search", "Path, folder, or extension");
+    const searchInputEl = searchFieldEl.createEl("input", { cls: "vaultprune-control-input" });
+    searchInputEl.type = "text";
+    searchInputEl.placeholder = "Example: attachments/logo.png";
+    searchInputEl.value = this.pathQuery;
+    searchInputEl.addEventListener("input", () => {
+      this.pathQuery = searchInputEl.value;
+      this.render(summary);
+    });
 
-    new Setting(toolbarEl)
-      .setName("Extension")
-      .setDesc("Only show candidates matching one extension.")
-      .addDropdown((dropdown) => {
-        dropdown.addOption("all", "All extensions");
-        for (const option of extensionOptions) {
-          dropdown.addOption(option, `.${option}`);
-        }
+    const extensionFieldEl = createControlField(toolbarEl, "Extension", "Show one type");
+    const extensionSelectEl = extensionFieldEl.createEl("select", {
+      cls: "vaultprune-control-input",
+    });
+    addSelectOption(extensionSelectEl, "all", "All extensions");
+    for (const option of extensionOptions) {
+      addSelectOption(extensionSelectEl, option, `.${option}`);
+    }
+    extensionSelectEl.value = this.extensionFilter;
+    extensionSelectEl.addEventListener("change", () => {
+      this.extensionFilter = extensionSelectEl.value;
+      this.render(summary);
+    });
 
-        dropdown.setValue(this.extensionFilter).onChange((value) => {
-          this.extensionFilter = value;
-          this.render(summary);
-        });
-      });
-
-    new Setting(toolbarEl)
-      .setName("Sort")
-      .setDesc("Change candidate ordering.")
-      .addDropdown((dropdown) => {
-        dropdown
-          .addOption("path", "Path")
-          .addOption("size-desc", "Largest first")
-          .addOption("modified-desc", "Recently modified")
-          .addOption("extension", "Extension")
-          .setValue(this.sortOrder)
-          .onChange((value) => {
-            this.sortOrder = value as SortOrder;
-            this.render(summary);
-          });
-      });
+    const sortFieldEl = createControlField(toolbarEl, "Sort", "Choose list order");
+    const sortSelectEl = sortFieldEl.createEl("select", { cls: "vaultprune-control-input" });
+    addSelectOption(sortSelectEl, "path", "Path");
+    addSelectOption(sortSelectEl, "size-desc", "Largest first");
+    addSelectOption(sortSelectEl, "modified-desc", "Recently modified");
+    addSelectOption(sortSelectEl, "extension", "Extension");
+    sortSelectEl.value = this.sortOrder;
+    sortSelectEl.addEventListener("change", () => {
+      this.sortOrder = sortSelectEl.value as SortOrder;
+      this.render(summary);
+    });
 
     const actionRow = parentEl.createDiv({ cls: "vaultprune-actions" });
-    new Setting(actionRow)
-      .addButton((button) => {
-        button.setButtonText("Refresh").setIcon("rotate-ccw").onClick(() => {
-          void this.refresh();
-        });
-      })
-      .addButton((button) => {
-        button.setButtonText("Reset filters").onClick(() => {
-          this.pathQuery = "";
-          this.extensionFilter = "all";
-          this.sortOrder = "path";
-          this.render(summary);
-        });
-      })
-      .addButton((button) => {
-        button.setButtonText("Select visible").onClick(() => {
-          for (const candidate of visibleCandidates) {
-            this.selectedPaths.add(candidate.path);
-          }
-          this.render(summary);
-        });
-      })
-      .addButton((button) => {
-        button.setButtonText("Clear visible").onClick(() => {
-          for (const candidate of visibleCandidates) {
-            this.selectedPaths.delete(candidate.path);
-          }
-          this.render(summary);
-        });
-      })
-      .addButton((button) => {
-        button.setButtonText("Preview report").setCta().onClick(() => {
-          this.plugin.openPreviewReport(
-            summary,
-            visibleCandidates,
-            this.selectedPaths,
-            "Preview unused attachments report",
-            "Preview only. This report reflects the current filtered view.",
-          );
-        });
-      })
-      .addButton((button) => {
-        button
-          .setButtonText("Move selected to trash")
-          .setWarning()
-          .setDisabled(this.selectedPaths.size === 0)
-          .onClick(() => {
-            void this.trashSelected();
-          });
-      });
+    const refreshButtonEl = actionRow.createEl("button", { text: "Refresh scan" });
+    refreshButtonEl.addEventListener("click", () => {
+      void this.refresh();
+    });
+
+    const resetButtonEl = actionRow.createEl("button", { text: "Reset filters" });
+    resetButtonEl.addEventListener("click", () => {
+      this.pathQuery = "";
+      this.extensionFilter = "all";
+      this.sortOrder = "path";
+      this.render(summary);
+    });
+
+    const selectButtonEl = actionRow.createEl("button", { text: "Select visible" });
+    selectButtonEl.addEventListener("click", () => {
+      for (const candidate of visibleCandidates) {
+        this.selectedPaths.add(candidate.path);
+      }
+      this.render(summary);
+    });
+
+    const clearButtonEl = actionRow.createEl("button", { text: "Clear visible" });
+    clearButtonEl.addEventListener("click", () => {
+      for (const candidate of visibleCandidates) {
+        this.selectedPaths.delete(candidate.path);
+      }
+      this.render(summary);
+    });
+
+    const reportButtonEl = actionRow.createEl("button", { text: "Preview report" });
+    reportButtonEl.classList.add("mod-cta");
+    reportButtonEl.addEventListener("click", () => {
+      this.plugin.openPreviewReport(
+        summary,
+        visibleCandidates,
+        this.selectedPaths,
+        "Preview unused attachments report",
+        "Preview only. This report reflects the current filtered view.",
+      );
+    });
+
+    const trashButtonEl = actionRow.createEl("button", { text: "Move selected to trash" });
+    trashButtonEl.classList.add("mod-warning");
+    trashButtonEl.disabled = this.selectedPaths.size === 0;
+    trashButtonEl.addEventListener("click", () => {
+      void this.trashSelected();
+    });
   }
 
   private renderCandidateRow(
@@ -279,6 +312,10 @@ export class VaultPruneReviewModal extends Modal {
     detailsEl.createDiv({
       cls: "vaultprune-file-path",
       text: candidate.path,
+    });
+    detailsEl.createDiv({
+      cls: "vaultprune-file-status",
+      text: "No reference found in the scanned notes or Canvas files.",
     });
     detailsEl.createDiv({
       cls: "vaultprune-file-meta",
@@ -309,6 +346,7 @@ export class VaultPruneReviewModal extends Modal {
     previewEl.setAttribute("aria-label", `Preview for ${candidate.path}`);
 
     if (IMAGE_PREVIEW_EXTENSIONS.has(candidate.extension)) {
+      this.makePreviewClickable(previewEl, candidate);
       const imageEl = previewEl.createEl("img", { cls: "vaultprune-file-preview-media" });
       imageEl.alt = "";
       imageEl.loading = "lazy";
@@ -320,6 +358,7 @@ export class VaultPruneReviewModal extends Modal {
     }
 
     if (VIDEO_PREVIEW_EXTENSIONS.has(candidate.extension)) {
+      this.makePreviewClickable(previewEl, candidate);
       const videoEl = previewEl.createEl("video", { cls: "vaultprune-file-preview-media" });
       videoEl.muted = true;
       videoEl.preload = "metadata";
@@ -333,14 +372,24 @@ export class VaultPruneReviewModal extends Modal {
     this.renderPreviewBadge(previewEl, candidate.extension);
   }
 
-  private renderPreviewBadge(previewEl: HTMLElement, extension: string): void {
-    previewEl.empty();
-    const iconEl = previewEl.createDiv({ cls: "vaultprune-file-preview-icon" });
-    setIcon(iconEl, getPreviewIcon(extension));
-    previewEl.createDiv({
-      cls: "vaultprune-file-preview-extension",
-      text: extension || "file",
+  private makePreviewClickable(previewEl: HTMLElement, candidate: AttachmentCandidate): void {
+    previewEl.addClass("vaultprune-file-preview-clickable");
+    previewEl.tabIndex = 0;
+    previewEl.setAttribute("role", "button");
+    previewEl.setAttribute("aria-label", `Open larger preview for ${candidate.path}`);
+    previewEl.addEventListener("click", () => {
+      new AttachmentPreviewModal(this.app, candidate).open();
     });
+    previewEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        new AttachmentPreviewModal(this.app, candidate).open();
+      }
+    });
+  }
+
+  private renderPreviewBadge(previewEl: HTMLElement, extension: string): void {
+    renderPreviewBadgeContent(previewEl, extension);
   }
 
   private async ignoreCandidate(candidate: AttachmentCandidate): Promise<void> {
@@ -420,6 +469,51 @@ export class VaultPruneReviewModal extends Modal {
     }
 
     await this.refresh();
+  }
+}
+
+class AttachmentPreviewModal extends Modal {
+  private candidate: AttachmentCandidate;
+
+  constructor(app: App, candidate: AttachmentCandidate) {
+    super(app);
+    this.candidate = candidate;
+  }
+
+  onOpen(): void {
+    this.modalEl.addClass("vaultprune-preview-modal");
+    this.contentEl.empty();
+    this.contentEl.createEl("h2", { text: this.candidate.path });
+
+    const previewEl = this.contentEl.createDiv({ cls: "vaultprune-large-preview" });
+    if (IMAGE_PREVIEW_EXTENSIONS.has(this.candidate.extension)) {
+      const imageEl = previewEl.createEl("img", { cls: "vaultprune-large-preview-media" });
+      imageEl.alt = this.candidate.path;
+      imageEl.src = this.app.vault.getResourcePath(this.candidate.file);
+    } else if (VIDEO_PREVIEW_EXTENSIONS.has(this.candidate.extension)) {
+      const videoEl = previewEl.createEl("video", { cls: "vaultprune-large-preview-media" });
+      videoEl.controls = true;
+      videoEl.src = this.app.vault.getResourcePath(this.candidate.file);
+    } else {
+      renderPreviewBadgeContent(previewEl, this.candidate.extension);
+    }
+
+    const actionRow = this.contentEl.createDiv({ cls: "vaultprune-actions" });
+    const openButtonEl = actionRow.createEl("button", { text: "Open file" });
+    openButtonEl.addEventListener("click", () => {
+      void this.app.workspace.getLeaf(true).openFile(this.candidate.file);
+      this.close();
+    });
+
+    const closeButtonEl = actionRow.createEl("button", { text: "Close" });
+    closeButtonEl.addEventListener("click", () => {
+      this.close();
+    });
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
+    this.modalEl.removeClass("vaultprune-preview-modal");
   }
 }
 
@@ -538,6 +632,44 @@ class ConfirmActionModal extends Modal {
     this.resolvePromise(value);
     this.close();
   }
+}
+
+function renderStat(
+  parentEl: HTMLElement,
+  label: string,
+  value: string,
+  detail: string,
+): void {
+  const statEl = parentEl.createDiv({ cls: "vaultprune-stat" });
+  statEl.createDiv({ cls: "vaultprune-stat-value", text: value });
+  statEl.createDiv({ cls: "vaultprune-stat-label", text: label });
+  statEl.createDiv({ cls: "vaultprune-stat-detail", text: detail });
+}
+
+function createControlField(
+  parentEl: HTMLElement,
+  label: string,
+  description: string,
+): HTMLElement {
+  const fieldEl = parentEl.createDiv({ cls: "vaultprune-control-field" });
+  fieldEl.createEl("label", { cls: "vaultprune-control-label", text: label });
+  fieldEl.createDiv({ cls: "vaultprune-control-description", text: description });
+  return fieldEl;
+}
+
+function addSelectOption(selectEl: HTMLSelectElement, value: string, label: string): void {
+  const optionEl = selectEl.createEl("option", { text: label });
+  optionEl.value = value;
+}
+
+function renderPreviewBadgeContent(previewEl: HTMLElement, extension: string): void {
+  previewEl.empty();
+  const iconEl = previewEl.createDiv({ cls: "vaultprune-file-preview-icon" });
+  setIcon(iconEl, getPreviewIcon(extension));
+  previewEl.createDiv({
+    cls: "vaultprune-file-preview-extension",
+    text: extension || "file",
+  });
 }
 
 function compareCandidates(
