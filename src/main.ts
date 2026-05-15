@@ -8,6 +8,7 @@ import {
 import { VaultPruneReviewModal, VaultPruneReportModal } from "./review-modal";
 import {
   buildDefaultSettings,
+  detectObsidianAttachmentFolder,
   VaultPruneSettingTab,
   type VaultPruneSettings,
 } from "./settings";
@@ -51,7 +52,14 @@ export default class VaultPrunePlugin extends Plugin {
 
   async loadSettings(): Promise<void> {
     const loaded = (await this.loadData()) as Partial<VaultPruneSettings> | null;
-    this.settings = Object.assign({}, buildDefaultSettings(this.app.vault.configDir), loaded ?? {});
+    this.settings = Object.assign(
+      {},
+      buildDefaultSettings(
+        this.app.vault.configDir,
+        detectObsidianAttachmentFolder(this.app) ?? "",
+      ),
+      loaded ?? {},
+    );
   }
 
   async saveSettings(): Promise<void> {

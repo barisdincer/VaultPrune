@@ -23,10 +23,11 @@ VaultPrune is being designed around a safe cleanup flow:
 1. Scan the vault for likely attachment files.
 2. Detect which attachments are referenced by Markdown notes.
 3. Also consider file references inside Canvas files, including text-card links and group backgrounds.
-4. Show unused attachment candidates in a review modal with search, extension filters, sorting, and bulk selection tools.
-5. Show quick previews for visual media and allow known-safe files to be ignored from future scans.
-6. Generate a preview-only report before moving reviewed files to trash.
-7. Let the user move selected files to trash.
+4. Prefer Obsidian's configured attachment folder when it can be determined, while allowing users to enter folders manually.
+5. Show unused attachment candidates in a review modal with search, extension filters, sorting, and bulk selection tools.
+6. Show quick previews for visual media and allow known-safe files to be ignored from future scans.
+7. Generate a preview-only report before moving reviewed files to trash.
+8. Let the user move selected files to trash.
 
 ## Repository status
 
@@ -78,6 +79,7 @@ node scripts/install-local.mjs "/absolute/path/to/your/vault"
 The first plugin milestone focuses on:
 
 - scanning the vault safely
+- using Obsidian's attachment folder setting when available
 - listing unused attachment candidates
 - reviewing them in a modal
 - filtering and preview-reporting candidates before deletion

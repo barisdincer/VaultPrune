@@ -5,6 +5,10 @@ import { normalizeConfiguredFolderPath } from "./utils";
 
 type SettingsTextareaSize = "medium" | "short" | "tall";
 
+interface VaultConfigReader {
+  getConfig: (key: string) => unknown;
+}
+
 export interface VaultPruneSettings {
   attachmentFolders: string;
   ignoredFolders: string;
@@ -46,14 +50,31 @@ export const DEFAULT_ATTACHMENT_EXTENSIONS = [
   "rar"
 ].join(", ");
 
-export function buildDefaultSettings(configDir: string): VaultPruneSettings {
+export function buildDefaultSettings(
+  configDir: string,
+  attachmentFolders = "",
+): VaultPruneSettings {
   return {
-    attachmentFolders: "",
+    attachmentFolders,
     ignoredFolders: [configDir, ".trash", ".git"].filter(Boolean).join("\n"),
     ignoredFiles: "",
     attachmentExtensions: DEFAULT_ATTACHMENT_EXTENSIONS,
     extraReferenceExtensions: "json",
   };
+}
+
+export function detectObsidianAttachmentFolder(app: App): string | null {
+  const configReader = app.vault as Partial<VaultConfigReader>;
+  if (typeof configReader.getConfig !== "function") {
+    return null;
+  }
+
+  const configuredPath = configReader.getConfig("attachmentFolderPath");
+  if (typeof configuredPath !== "string") {
+    return null;
+  }
+
+  return normalizeObsidianAttachmentFolder(configuredPath, app);
 }
 
 function normalizeMultilinePaths(value: string, app: App): string {
@@ -64,6 +85,24 @@ function normalizeMultilinePaths(value: string, app: App): string {
     .map((entry) => normalizeConfiguredFolderPath(entry, app))
     .filter(Boolean)
     .join("\n");
+}
+
+function normalizeObsidianAttachmentFolder(value: string, app: App): string | null {
+  const trimmedValue = value.trim();
+  if (!trimmedValue || trimmedValue === "/") {
+    return "";
+  }
+
+  if (
+    trimmedValue === "." ||
+    trimmedValue === "./" ||
+    trimmedValue.startsWith("./") ||
+    trimmedValue.startsWith("../")
+  ) {
+    return null;
+  }
+
+  return normalizeConfiguredFolderPath(trimmedValue, app);
 }
 
 function normalizeExtensions(value: string): string {
@@ -105,6 +144,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.addClass("vaultprune-settings-tab");
     this.normalizeStoredPathSettings();
+    const detectedAttachmentFolder = detectObsidianAttachmentFolder(this.app);
 
     const scanSetting = new Setting(containerEl)
       .setName("Find unused attachments")
@@ -124,10 +164,10 @@ export class VaultPruneSettingTab extends PluginSettingTab {
 
     const attachmentFoldersSetting = new Setting(containerEl)
       .setName("Attachment folders")
-      .setDesc("Optional. One folder per line. Leave empty to scan the whole vault.")
+      .setDesc(getAttachmentFoldersDescription(detectedAttachmentFolder))
       .addTextArea((text) => {
         text
-          .setPlaceholder("z_ekler\nAttachments\nassets/images")
+          .setPlaceholder(detectedAttachmentFolder || "Attachments\nassets/images")
           .setValue(this.plugin.settings.attachmentFolders)
           .onChange(async (value) => {
             this.plugin.settings.attachmentFolders = normalizeMultilinePaths(value, this.app);
@@ -137,6 +177,18 @@ export class VaultPruneSettingTab extends PluginSettingTab {
         text.inputEl.cols = 40;
         applySettingsTextareaLayout(text.inputEl, "short");
       });
+    if (detectedAttachmentFolder !== null) {
+      attachmentFoldersSetting.addButton((button) => {
+        button
+          .setButtonText("Use Obsidian setting")
+          .setIcon("folder-input")
+          .onClick(async () => {
+            this.plugin.settings.attachmentFolders = detectedAttachmentFolder;
+            await this.plugin.saveSettings();
+            this.display();
+          });
+      });
+    }
     attachmentFoldersSetting.settingEl.addClass("vaultprune-settings-textarea-setting");
 
     const ignoredFoldersSetting = new Setting(containerEl)
@@ -161,7 +213,7 @@ export class VaultPruneSettingTab extends PluginSettingTab {
       .setDesc("One file per line. These files will be ignored by unused attachment scans.")
       .addTextArea((text) => {
         text
-          .setPlaceholder("z_ekler/keep-this.png")
+          .setPlaceholder("Attachments/keep-this.png")
           .setValue(this.plugin.settings.ignoredFiles)
           .onChange(async (value) => {
             this.plugin.settings.ignoredFiles = normalizeMultilinePaths(value, this.app);
@@ -238,4 +290,16 @@ export class VaultPruneSettingTab extends PluginSettingTab {
       void this.plugin.saveSettings();
     }
   }
+}
+
+function getAttachmentFoldersDescription(detectedAttachmentFolder: string | null): string {
+  if (detectedAttachmentFolder === null) {
+    return "Optional. Obsidian does not expose one global attachment folder for this vault. Enter one folder per line, or leave empty to scan the whole vault.";
+  }
+
+  if (detectedAttachmentFolder) {
+    return `Detected from Obsidian: ${detectedAttachmentFolder}. Edit this if your attachments live in more than one folder.`;
+  }
+
+  return "Obsidian is configured to place attachments at the vault root. Leave empty to scan the whole vault, or enter specific folders.";
 }
